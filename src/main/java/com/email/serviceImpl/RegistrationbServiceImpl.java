@@ -113,4 +113,26 @@ public class RegistrationbServiceImpl implements RegistrationService {
 	    otpRepo.save(otp);
 		
     }
+
+    @Override
+    public boolean verifyOtp(String email, String otpp) {
+        Person person = personRepository.findByEmail(email).orElseThrow(()-> new RuntimeException("Otp with email not found!!"));
+        Otp otp = otpRepo.findValidOtp(otpp,email).
+                orElseThrow(()->new RuntimeException("OTP expired or not found !!"));
+        LocalDateTime expiryTime = otp.getExpiryAt();
+        LocalDateTime currentTime = LocalDateTime.now();
+
+        if (!otp.getOtp().equals(otpp)) {
+            return false;
+        }
+
+        long diffInMinutes = Duration.between(expiryTime, currentTime).toMinutes();
+
+        if (diffInMinutes > 5) {
+            return false;
+        }
+        otp.setUsed(true);
+        otpRepo.save(otp);
+        return true;
+    }
 }

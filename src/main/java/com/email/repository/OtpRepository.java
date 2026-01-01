@@ -22,4 +22,12 @@ public interface OtpRepository extends JpaRepository<Otp,Integer>{
 			+ " otp.otp =:otp ")
 	Optional<Otp> findValidOtp(String otp, String email);
 
+	@Query("" +
+			"Select Otp " +
+			"from Otp otp " +
+			" inner join otp.person person " +
+			" where person.email =:email" +
+			" AND otp.used = false"
+	 )
+	Optional<Otp> findOtpByEmail(String email);
 }

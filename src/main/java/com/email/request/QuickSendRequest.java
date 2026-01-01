@@ -21,6 +21,4 @@ public class QuickSendRequest {
 		this.personEmail = personEmail;
 	}
 	
-	
-
 }
