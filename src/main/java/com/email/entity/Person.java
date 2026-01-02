@@ -3,6 +3,7 @@ package com.email.entity;
 
 import com.email.security.Role;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,9 +25,6 @@ public class Person {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
-
     @ManyToMany
     private List<Role> roles = new ArrayList<>();
 
@@ -43,6 +41,9 @@ public class Person {
             orphanRemoval = true
     )
     private List<EmailLog> emails = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.LAZY,orphanRemoval = true,mappedBy = "user")
+    private List<UserSession>sessions = new ArrayList<>();
 
     @Column(nullable = false)
     private boolean accountNonExpired = true;
@@ -71,15 +72,6 @@ public class Person {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    // password for authentication
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public List<Role> getRoles() {

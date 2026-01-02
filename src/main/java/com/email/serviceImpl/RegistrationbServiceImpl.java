@@ -7,10 +7,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
@@ -42,6 +44,8 @@ public class RegistrationbServiceImpl implements RegistrationService {
     private OtpRepository otpRepo;
 
     @Override
+    @Async
+    @Transactional
     public void sendOtp(SendEmailOtpReq req) {
         Optional<Person> person = personRepository.findByEmail(req.getEmail());
         Person p1 = null;
@@ -117,10 +121,13 @@ public class RegistrationbServiceImpl implements RegistrationService {
     @Override
     public boolean verifyOtp(String email, String otpp) {
         Person person = personRepository.findByEmail(email).orElseThrow(()-> new RuntimeException("Otp with email not found!!"));
-        Otp otp = otpRepo.findValidOtp(otpp,email).
-                orElseThrow(()->new RuntimeException("OTP expired or not found !!"));
-        LocalDateTime expiryTime = otp.getExpiryAt();
-        LocalDateTime currentTime = LocalDateTime.now();
+        System.out.println(email +" "+otpp+"dvyhdey");
+        Optional<Otp> otpOptiuonal = otpRepo.findValidOtp(otpp,email);
+        System.out.println(otpOptiuonal);
+        Otp otp = otpOptiuonal.get();
+
+            LocalDateTime expiryTime = otp.getExpiryAt();
+            LocalDateTime currentTime = LocalDateTime.now();
 
         if (!otp.getOtp().equals(otpp)) {
             return false;
@@ -131,7 +138,6 @@ public class RegistrationbServiceImpl implements RegistrationService {
         if (diffInMinutes > 5) {
             return false;
         }
-        otp.setUsed(true);
         otpRepo.save(otp);
         return true;
     }

@@ -1,13 +1,19 @@
 package com.email.controller;
 
 import com.email.entity.Otp;
+import com.email.entity.Person;
+import com.email.entity.UserSession;
+import com.email.repository.OtpRepository;
+import com.email.repository.UserSessionRepository;
 import com.email.request.SendEmailOtpReq;
 import com.email.request.VerifyOtpRequest;
 import com.email.resposne.LoginResponse;
 import com.email.security.JwtUtil;
 import com.email.service.OtpService;
 import com.email.service.RegistrationService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,6 +38,10 @@ public class AuthController {
 
     @Autowired
     private RegistrationService service;
+    @Autowired
+    private OtpRepository otpRepository;
+    @Autowired
+    private UserSessionRepository userSessionRepository;
 
     @PostMapping("/verify-otp")
     public LoginResponse VerifyOtp(@RequestBody VerifyOtpRequest otpReq){
@@ -41,10 +51,12 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         Otp otp =otpService.findOtpByEmail(otpReq.getEmail());
         otp.setUsed(true);
+        Person person = otp.getPerson();
+        otpRepository.save(otp);
         String jwtToken = jwtUtil.generateToken(otpReq.getEmail());
-//	        return "JWT Token: " + jwtToken;
+        UserSession session = new UserSession(jwtToken,person);
+        userSessionRepository.save(session);
         LoginResponse response = new LoginResponse(jwtToken);
-        //System.out.println(response.getEmail());
         return response;
     }
 

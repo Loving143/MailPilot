@@ -28,11 +28,12 @@ public class OtpAuthenticationProvider implements AuthenticationProvider {
         String username = authentication.getName();
         Object t= authentication.getCredentials();
         String otp = authentication.getCredentials().toString();
-
+        System.out.println(otp +" "+username);
         // ✅ OTP verification yahin ho rahi hai
         if (!registrationService.verifyOtp(username, otp)) {
-            throw new BadCredentialsException("Invalid OTP");
+            throw new RuntimeException("Invalid OTP");
         }
+        System.out.println("This is otp");
 
         UserDetails user = userDetailsService
                 .loadUserByUsername(username);

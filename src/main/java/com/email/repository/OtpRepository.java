@@ -7,27 +7,29 @@ import org.springframework.data.jpa.repository.Query;
 
 import com.email.entity.Otp;
 import com.email.entity.Person;
+import org.springframework.data.repository.query.Param;
 
 public interface OtpRepository extends JpaRepository<Otp,Integer>{
 	
 	Optional<Otp> findByOtpAndUsedFalseOrderByCreatedAtDesc(String email);
 
 	@Query("Select "
-			+ " otp from Otp otp "
-			+ " inner join otp.person as person "
+			+ " otpp from Otp otpp "
+			+ " join otpp.person as person "
 			+ " where person.email =:email"
 			+ " AND "
-			+ " otp.used = false "
+			+ " otpp.used = false "
 			+ " AND "
-			+ " otp.otp =:otp ")
-	Optional<Otp> findValidOtp(String otp, String email);
+			+ " otpp.otp =:otp ")
+	Optional<Otp> findValidOtp( @Param("otp") String otp,
+								@Param("email") String email);
 
 	@Query("" +
-			"Select Otp " +
-			"from Otp otp " +
-			" inner join otp.person person " +
+			"Select otpp " +
+			"from Otp otpp " +
+			" inner join otpp.person person " +
 			" where person.email =:email" +
-			" AND otp.used = false"
+			" AND otpp.used = false"
 	 )
 	Optional<Otp> findOtpByEmail(String email);
 }
