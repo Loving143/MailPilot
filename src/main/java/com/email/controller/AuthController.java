@@ -25,7 +25,7 @@ public class AuthController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    OtpService otpService;
+    OtpService otpService;	
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -34,7 +34,8 @@ public class AuthController {
     private RegistrationService service;
 
     @PostMapping("/verify-otp")
-    public LoginResponse VerifyOtp(VerifyOtpRequest otpReq){
+    public LoginResponse VerifyOtp(@RequestBody VerifyOtpRequest otpReq){
+    	System.out.println(otpReq.getEmail());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(otpReq.getEmail(), otpReq.getOtp()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -52,4 +53,8 @@ public class AuthController {
         service.sendOtp(req);
         return "Otp sent successfully!!";
     }
+    
+ // create a REST API to fetch user by id
+    	
+
 }

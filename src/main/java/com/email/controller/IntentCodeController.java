@@ -18,6 +18,9 @@ public class IntentCodeController {
 	@Autowired
 	private IntentCodeService intentCodeService;
 	
+	// create a method to return current date
+
+	
 	@PostMapping("/create/intent-code")
 	public String createIntentCode(@RequestBody IntentCodeRequest req){
 		intentCodeService.registerIntentCode(req);
