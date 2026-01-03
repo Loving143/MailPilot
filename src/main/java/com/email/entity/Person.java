@@ -25,7 +25,7 @@ public class Person {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @ManyToMany
+    @ManyToMany(fetch=FetchType.EAGER)
     private List<Role> roles = new ArrayList<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -33,6 +33,8 @@ public class Person {
 
     @Column(unique = true)
     private String mobNo;
+
+    private String name;
 
     @OneToMany(
             mappedBy = "person",
@@ -148,5 +150,17 @@ public class Person {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public void setPassword(String encode) {
+
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setNamee(String name) {
+        this.name = name;
     }
 }

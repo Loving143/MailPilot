@@ -3,13 +3,13 @@ package com.email.serviceImpl;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import com.email.resposne.EmailLogResponse;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
@@ -21,16 +21,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import com.email.constants.EmailConstants;
 import com.email.constants.EmailStatus;
-import com.email.constants.SendOtp;
 import com.email.entity.EmailLog;
 import com.email.entity.Person;
 import com.email.entity.RecentEmail;
@@ -42,7 +40,6 @@ import com.email.request.HrDetailsRequest;
 import com.email.request.QuickSendRequest;
 import com.email.service.EmailService;
 
-import freemarker.template.Template;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
@@ -271,4 +268,44 @@ public class EmailServiceImpl implements EmailService {
 	        	 
 	         }
 	}
-	}
+
+    @Override
+    public void sendPasswordResetEmail(String email, String url, String subject) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setTo(email);
+            helper.setSubject(subject);
+            helper.setText(url, true);
+            mailSender.send(message);
+        }catch(Exception ex) {
+
+        }
+    }
+
+    @Override
+    public List<EmailLogResponse> fetchAllEmails() {
+        String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Person person = personRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        List<EmailLog> emails = repository.findByPersonId(person.getId());
+        return emails.stream().map(EmailLogResponse::new).collect(Collectors.toList());
+    }
+
+    @Override
+    public EmailLogResponse fetchEmailById(Long id) {
+        EmailLog emailLog = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+        return new EmailLogResponse(emailLog);
+    }
+
+    @Override
+    public void deleteEmailById(Long id) {
+        if(!repository.existsById(id)) {
+            throw new RuntimeException("Email log not found");
+        }
+        repository.deleteById(id);
+    }
+
+
+}

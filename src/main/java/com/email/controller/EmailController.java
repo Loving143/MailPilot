@@ -5,12 +5,7 @@ import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.email.request.EmailIntentRequest;
 import com.email.request.HrDetailsList;
@@ -72,6 +67,25 @@ public String send(@RequestBody HrDetailsList hrDetails) {
     	service.sendIntentEmail(req);
     	return ResponseEntity.ok("Message sent successfully!!");
     }
+
+    @GetMapping("fetch/all")
+    public ResponseEntity<?> fetchAllEmails(){
+    	return ResponseEntity.ok(service.fetchAllEmails());
+    }
+
+    @GetMapping("/fetch/{id}")
+    public ResponseEntity<?> fetchEmailById(@RequestBody Long id) {
+        return ResponseEntity.ok(service.fetchEmailById(id));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteEmailById(@PathVariable Long id){
+        service.deleteEmailById(id);
+        return ResponseEntity.ok("Email log deleted successfully");
+    }
+
+
+
     
     
 
