@@ -2,6 +2,7 @@ package com.email.serviceImpl;
 
 import com.email.entity.PasswordResetToken;
 import com.email.entity.Person;
+import com.email.exception.BadRequestException;
 import com.email.repository.PasswordResetTokenRepository;
 import com.email.repository.PersonRepository;
 import com.email.service.EmailService;
@@ -28,7 +29,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
 
     public void sendPasswordResetToken(String email) {
         Person user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BadRequestException("User not found"));
 
         String token = UUID.randomUUID().toString();
         PasswordResetToken resetToken = new PasswordResetToken(token, user);
@@ -42,10 +43,10 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
     @Override
     public void updatePassword(String token, String newPassword) {
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+                .orElseThrow(() -> new BadRequestException("Invalid token"));
 
         if (resetToken.isExpired()) {
-            throw new RuntimeException("Token has expired");
+            throw new BadRequestException("Token has expired");
         }
 
         Person user = resetToken.getUser();

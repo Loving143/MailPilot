@@ -1,6 +1,7 @@
 package com.email.serviceImpl;
 
 import com.email.entity.Person;
+import com.email.exception.BadRequestException;
 import com.email.repository.PersonRepository;
 import com.email.repository.UserSessionRepository;
 import com.email.request.ProfileUpdateRequest;
@@ -28,7 +29,7 @@ public class PersonServiceImpl implements PersonService {
     @Transactional
     public void logOutUser(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Invalid Authorization header");
+            throw new BadRequestException("Invalid Authorization header");
         }
 
         String token = authHeader.substring(7);
@@ -37,7 +38,7 @@ public class PersonServiceImpl implements PersonService {
                 token, LocalDateTime.now());
 
         if (updated == 0) {
-            throw new RuntimeException("Session already invalid or not found");
+            throw new BadRequestException("Session already invalid or not found");
         }
     }
 
@@ -45,7 +46,7 @@ public class PersonServiceImpl implements PersonService {
     public UserProfileResponse fetchCurrentUserProfile() {
       String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             Person person = personRepository.findByEmail(currentUsername)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                    .orElseThrow(() -> new BadRequestException("User not found"));
             return new UserProfileResponse(person);
     }
 
@@ -53,7 +54,7 @@ public class PersonServiceImpl implements PersonService {
     public void updateProfile(ProfileUpdateRequest req) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Person person = personRepository.findByEmail(currentUsername)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new BadRequestException("User not found"));
         // Update profile logic here
         person.setNamee(req.getName());
         person.setMobNo(req.getMobNo());

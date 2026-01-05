@@ -2,6 +2,7 @@ package com.email.serviceImpl;
 
 import java.util.List;
 
+import com.email.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,10 +27,10 @@ public class IntentCodeServiceImpl implements IntentCodeService {
 
         IntentCategory category = categoryRepo
                 .findByCategoryCode(req.getCategoryCode())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new BadRequestException("Category not found"));
 
         if (intentRepo.findByCode(req.getCode()).isPresent()) {
-            throw new RuntimeException("Intent code already exists");
+            throw new BadRequestException("Intent code already exists");
         }
 
         IntentCode intent = new IntentCode();
@@ -49,12 +50,12 @@ public class IntentCodeServiceImpl implements IntentCodeService {
 
     public IntentCode getIntentByCode(String code) {
         return intentRepo.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Intent not found"));
+                .orElseThrow(() -> new BadRequestException("Intent not found"));
     }
 	
 	@Override
 	public IntentCodeResponse fetchIntentCode(String Code) {
-		IntentCode intentCode = intentRepo.findByCode(Code).orElseThrow(()-> new RuntimeException("Intent code with the given code does not exists!"));
+		IntentCode intentCode = intentRepo.findByCode(Code).orElseThrow(()-> new BadRequestException("Intent code with the given code does not exists!"));
 		IntentCodeResponse res = new IntentCodeResponse(intentCode);
 		return res;
 	}
@@ -63,10 +64,10 @@ public class IntentCodeServiceImpl implements IntentCodeService {
 	public IntentCode registerIntentCode(IntentCodeRequest req) {
 		IntentCategory category = categoryRepo
                 .findByCategoryCode(req.getCategoryCode())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new BadRequestException("Category not found"));
 
         if (intentRepo.findByCode(req.getCode()).isPresent()) {
-            throw new RuntimeException("Intent code already exists");
+            throw new BadRequestException("Intent code already exists");
         }
 
         IntentCode intent = new IntentCode();

@@ -1,5 +1,6 @@
 package com.email.controller;
 
+import com.email.exception.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,11 +19,12 @@ public class IntentCategoryController {
 
     @PostMapping("/create/category")
     public ResponseEntity<?> createCategory(@RequestBody IntentCategoryRequest req) {
-        return ResponseEntity.ok(categoryService.createCategory(req));
+        return ResponseEntity.ok(new ApiResponse("1",categoryService.createCategory(req)));
     }
 
     @GetMapping("/fetch/category/all")
     public ResponseEntity<?> getAllCategories() {
-        return ResponseEntity.ok(categoryService.getAllCategories());
+        return ResponseEntity.ok(
+                new ApiResponse("1",categoryService.getAllCategories()));
     }
 }

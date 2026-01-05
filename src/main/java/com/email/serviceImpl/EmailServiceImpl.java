@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.email.exception.BadRequestException;
 import com.email.resposne.EmailLogResponse;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -77,14 +78,14 @@ public class EmailServiceImpl implements EmailService {
             helper.addAttachment("Resume.pdf", resume);
             mailSender.send(message);
         }catch(Exception ex) {
-        	 
+        	 throw new BadRequestException("Error while sending email!");
          }
 
     }
 
     @Override
     public void updateEmailStatus(String email, EmailStatus status, String mobNo) {
-        EmailLog emailLog = repository.findByRecipientEmail(email).orElseThrow(() -> new RuntimeException("Email not found!"));
+        EmailLog emailLog = repository.findByRecipientEmail(email).orElseThrow(() -> new BadRequestException("Email not found!"));
         emailLog.setStatus(status);
         if (emailLog.getMobNo() == null) {
             emailLog.setMobNo(mobNo);
@@ -164,7 +165,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void addHrDetails(HrDetailsRequest req) {
         if(repository.existsByRecipientEmail(req.getEmail())) {
-            throw new RuntimeException("Email already exists.Please update status!!");
+            throw new BadRequestException("Email already exists.Please update status!!");
         }
         EmailLog emailLog = new EmailLog();
         emailLog.setRecipientEmail(req.getEmail());
@@ -176,10 +177,11 @@ public class EmailServiceImpl implements EmailService {
 
 	@Override
 	public void saveEmailLog(HrDetailsRequest req) {
-		try {
+        String userName = (String)SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
 		EmailLog log = new EmailLog();
         if (repository.existsByRecipientEmail(req.getEmail())) {
-            throw new RuntimeException("Email already exists.Please update status!!");
+            throw new BadRequestException("Email already exists.Please update status!!");
         }
         log.setRecipientEmail(req.getEmail());
         log.setSubject(EmailConstants.SUBJECT);
@@ -187,11 +189,11 @@ public class EmailServiceImpl implements EmailService {
         log.setMobNo(req.getMobNo());
         log.setStatus(EmailStatus.EMAIL_SENT);
         
-        Optional<Person> person = personRepository.findByEmail(req.getPersonEmail());
+        Optional<Person> person = personRepository.findByEmail(userName);
         Person person1 = null;
         if(person.isEmpty()) {
             person1 = new Person();
-            person1.setEmail(req.getPersonEmail());
+            person1.setEmail(userName);
             person1.addEmails(log);
            
         }else {
@@ -201,7 +203,7 @@ public class EmailServiceImpl implements EmailService {
         person1 = personRepository.save(person1);
         saveRecentEmail(req,person1);
 	} catch (Exception e) {
-        throw new RuntimeException("Failed to save email: " + e.getMessage(), e);
+        throw new BadRequestException("Failed to save email: " + e.getMessage());
 		}
 	}
 	
@@ -229,7 +231,7 @@ public class EmailServiceImpl implements EmailService {
 	@Override
 	public void quickSend(QuickSendRequest req) {
 		Person person = personRepository.findByEmail(req.getPersonEmail()).
-							orElseThrow(()->new RuntimeException("Person with email id does not exists!"));
+							orElseThrow(()->new BadRequestException("Person with email id does not exists!"));
 		RecentEmail recentEmail = recentEmailRepo.findByPersonId(person.getId()).orElseThrow(()->new RuntimeException("No recent email found!!"));
 		SendEmail(recentEmail,req);
 		recentEmail.setRecipientEmail(req.getRecipientEmail());
@@ -287,7 +289,7 @@ public class EmailServiceImpl implements EmailService {
     public List<EmailLogResponse> fetchAllEmails() {
         String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Person person = personRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BadRequestException("User not found"));
         List<EmailLog> emails = repository.findByPersonId(person.getId());
         return emails.stream().map(EmailLogResponse::new).collect(Collectors.toList());
     }
@@ -295,14 +297,14 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public EmailLogResponse fetchEmailById(Long id) {
         EmailLog emailLog = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Email not found"));
+                .orElseThrow(() -> new BadRequestException("Email not found"));
         return new EmailLogResponse(emailLog);
     }
 
     @Override
     public void deleteEmailById(Long id) {
         if(!repository.existsById(id)) {
-            throw new RuntimeException("Email log not found");
+            throw new BadRequestException("Email log not found");
         }
         repository.deleteById(id);
     }

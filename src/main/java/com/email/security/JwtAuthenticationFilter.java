@@ -1,9 +1,12 @@
 package com.email.security;
 import java.io.IOException;
+import java.util.List;
 
+import com.email.exception.BadRequestException;
 import com.email.repository.UserSessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -49,10 +52,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 boolean isSessionActive =
                         userSessionRepository.findByAccessTokenAndActiveTrue(jwt).isPresent();
                 if(!isSessionActive){
-                    throw new RuntimeException("User is logged out or session is inactive!");
+                    throw new BadRequestException("User is logged out or session is inactive!");
                 }
+                List<String> roles = jwtTokenUtil.extractRoles(jwt);
+                List<CustomGrantedAuthority> authorities =
+                        roles.stream()
+                                .map(CustomGrantedAuthority::new)
+                                .toList();
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
             }
         }

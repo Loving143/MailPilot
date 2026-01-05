@@ -12,8 +12,8 @@ public class HrDetailsRequest {
     private String personEmail;
     private String body;
     private String subject;
-	
-	public String getEmail() {
+
+    public String getEmail() {
 		return email;
 	}
 	public void setEmail(String email) {
@@ -64,4 +64,12 @@ public class HrDetailsRequest {
 	public String getSubject() {
 		return subject;
 	}
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
 }

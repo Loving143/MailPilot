@@ -4,16 +4,8 @@ import java.time.LocalDateTime;
 
 import com.email.constants.EmailStatus;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.SequenceGenerator;
+import com.mysql.cj.protocol.ColumnDefinition;
+import jakarta.persistence.*;
 
 @Entity
 public class RecentEmail {
@@ -24,7 +16,8 @@ public class RecentEmail {
 	private Integer id;
 	
 	private String subject;
-	
+
+	@Column(columnDefinition = "TEXT")
 	private String body;
 	
 	private String recipientEmail;

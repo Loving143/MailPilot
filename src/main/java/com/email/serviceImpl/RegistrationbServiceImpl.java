@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import com.email.exception.BadRequestException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -92,26 +93,26 @@ public class RegistrationbServiceImpl implements RegistrationService {
             helper.addInline("logoImage", logoResource);
             mailSender.send(message);
 		 } catch (Exception e) {
-	            throw new RuntimeException("Failed to send email: " + e.getMessage(), e);
+	            throw new BadRequestException("Failed to send email: " + e.getMessage());
 	        }
     }
 
     @Override
     public void verifyOtp(VerifyOtpRequest req) {
-    	Person person = personRepository.findByEmail(req.getEmail()).orElseThrow(()-> new RuntimeException("Otp with email not found!!"));
+    	Person person = personRepository.findByEmail(req.getEmail()).orElseThrow(()-> new BadRequestException("Otp with email not found!!"));
 		Otp otp = otpRepo.findValidOtp(req.getOtp(),req.getEmail()).
 					orElseThrow(()->new RuntimeException("OTP expired or not found !!"));
 		LocalDateTime expiryTime = otp.getExpiryAt();
 		LocalDateTime currentTime = LocalDateTime.now();
 		
 		if (!otp.getOtp().equals(req.getOtp())) {
-	        throw new RuntimeException("Incorrect OTP");
+	        throw new BadRequestException("Incorrect OTP");
 	    }
 
 	    long diffInMinutes = Duration.between(expiryTime, currentTime).toMinutes();
 
 	    if (diffInMinutes > 5) {
-	        throw new RuntimeException("OTP expired");
+	        throw new BadRequestException("OTP expired");
 	    }
 	    otp.setUsed(true);
 	    otpRepo.save(otp);
@@ -120,7 +121,7 @@ public class RegistrationbServiceImpl implements RegistrationService {
 
     @Override
     public boolean verifyOtp(String email, String otpp) {
-        Person person = personRepository.findByEmail(email).orElseThrow(()-> new RuntimeException("Otp with email not found!!"));
+        Person person = personRepository.findByEmail(email).orElseThrow(()-> new BadRequestException("Otp with email not found!!"));
         System.out.println(email +" "+otpp+"dvyhdey");
         Optional<Otp> otpOptiuonal = otpRepo.findValidOtp(otpp,email);
         System.out.println(otpOptiuonal);

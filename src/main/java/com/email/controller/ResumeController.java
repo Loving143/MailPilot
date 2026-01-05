@@ -3,9 +3,11 @@ package com.email.controller;
 import java.io.File;
 import java.io.IOException;
 
+import com.email.exception.ApiResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,19 +25,19 @@ public class ResumeController {
         value = "/upload",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<String> upload(
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> upload(
             @RequestParam("file") MultipartFile file) throws IOException {
 
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("File is empty");
         }
-
         File dir = new File(resumePath);
         if (!dir.exists()) dir.mkdirs();
 
         File resume = new File(dir, "Prateek_Kumar_Resume.pdf");
         file.transferTo(resume);
 
-        return ResponseEntity.ok("Resume uploaded successfully");
+        return ResponseEntity.ok(new ApiResponse("1","Resume uploaded successfully"));
     }
 }

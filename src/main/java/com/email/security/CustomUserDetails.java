@@ -18,9 +18,8 @@ public class CustomUserDetails implements UserDetails{
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return person.getRoles().stream().
-                map(role->new CustomGrantedAuthority(role.getRoleCode()))
-                .collect(Collectors.toList());
+        return List.of(new CustomGrantedAuthority("ROLE_USER"));
+
     }
 
     @Override

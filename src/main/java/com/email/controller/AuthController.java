@@ -3,6 +3,7 @@ package com.email.controller;
 import com.email.entity.Otp;
 import com.email.entity.Person;
 import com.email.entity.UserSession;
+import com.email.exception.ApiResponse;
 import com.email.repository.OtpRepository;
 import com.email.repository.UserSessionRepository;
 import com.email.request.SendEmailOtpReq;
@@ -46,8 +47,7 @@ public class AuthController {
     private PasswordResetTokenService passwordResetService;
 
     @PostMapping("/verify-otp")
-    public LoginResponse VerifyOtp(@RequestBody VerifyOtpRequest otpReq){
-    	System.out.println(otpReq.getEmail());
+    public ResponseEntity<?> VerifyOtp(@RequestBody VerifyOtpRequest otpReq){
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(otpReq.getEmail(), otpReq.getOtp()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -55,29 +55,29 @@ public class AuthController {
         otp.setUsed(true);
         Person person = otp.getPerson();
         otpRepository.save(otp);
-        String jwtToken = jwtUtil.generateToken(otpReq.getEmail());
+        String jwtToken = jwtUtil.generateToken(authentication,otpReq.getEmail());
         UserSession session = new UserSession(jwtToken,person);
         userSessionRepository.save(session);
         LoginResponse response = new LoginResponse(jwtToken);
-        return response;
+        return ResponseEntity.ok(new ApiResponse("1",response));
     }
 
     @PostMapping("send-otp")
-    public String sendOtp(@RequestBody SendEmailOtpReq req){
+    public ResponseEntity<?> sendOtp(@RequestBody SendEmailOtpReq req){
         service.sendOtp(req);
-        return "Otp sent successfully!!";
+        return ResponseEntity.ok(new ApiResponse<>("1","Otp sent successfully!!"));
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
+    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         passwordResetService.sendPasswordResetToken(email);
-        return ResponseEntity.ok("Password reset link sent to email");
+        return ResponseEntity.ok(new ApiResponse<>("1","Password reset link sent to email"));
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
         passwordResetService.updatePassword(token, newPassword);
-        return ResponseEntity.ok("Password has been reset successfully");
+        return ResponseEntity.ok(new ApiResponse<>("1","Password has been reset successfully"));
     }
     	
 

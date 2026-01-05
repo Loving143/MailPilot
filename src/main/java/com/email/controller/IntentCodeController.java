@@ -1,5 +1,6 @@
 package com.email.controller;
 
+import com.email.exception.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,19 +23,19 @@ public class IntentCodeController {
 
 	
 	@PostMapping("/create/intent-code")
-	public String createIntentCode(@RequestBody IntentCodeRequest req){
+	public ResponseEntity<?> createIntentCode(@RequestBody IntentCodeRequest req){
 		intentCodeService.registerIntentCode(req);
-		return "Intentcode saved successfully.";
+		return ResponseEntity.ok(new ApiResponse("1","Intentcode saved successfully."));
 	}
 	
 	@GetMapping("/fetch/intentCode/{intentCode}")
-	public IntentCodeResponse fetchIntentCode(@PathVariable String intentCode){
-		return intentCodeService.fetchIntentCode(intentCode);
+	public ResponseEntity<?> fetchIntentCode(@PathVariable String intentCode){
+		return ResponseEntity.ok(new ApiResponse("1", intentCodeService.fetchIntentCode(intentCode)));
 	}
 	
 	 @GetMapping("/fetch/intents/byCategoryCode/{category}")
 	 public ResponseEntity<?> getIntentsByCategory(@PathVariable String category) {
-	      return ResponseEntity.ok(intentCodeService.getIntentsByCategory(category));
+	      return ResponseEntity.ok(new ApiResponse("1",intentCodeService.getIntentsByCategory(category)));
 	 }
 
 }

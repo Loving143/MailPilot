@@ -1,6 +1,7 @@
 package com.email.serviceImpl;
 
 import com.email.entity.Otp;
+import com.email.exception.BadRequestException;
 import com.email.repository.OtpRepository;
 import com.email.service.OtpService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,6 @@ public class OtpServiceImpl implements OtpService {
 
     @Override
     public Otp findOtpByEmail(String email) {
-        return otpRepository.findOtpByEmail(email).orElseThrow(()-> new RuntimeException("Otp with this email does not exists!"));
+        return otpRepository.findOtpByEmail(email).orElseThrow(()-> new BadRequestException("Otp with this email does not exists!"));
     }
 }
