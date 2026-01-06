@@ -29,7 +29,8 @@ public interface OtpRepository extends JpaRepository<Otp,Integer>{
 			"from Otp otpp " +
 			" inner join otpp.person person " +
 			" where person.email =:email" +
-			" AND otpp.used = false"
+			" AND otpp.used = false " +
+			" AND otpp.id = (select max(o.id) from Otp o where o.person.id = person.id) "
 	 )
 	Optional<Otp> findOtpByEmail(String email);
 }

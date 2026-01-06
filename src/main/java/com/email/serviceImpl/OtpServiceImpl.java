@@ -15,6 +15,8 @@ public class OtpServiceImpl implements OtpService {
 
     @Override
     public Otp findOtpByEmail(String email) {
-        return otpRepository.findOtpByEmail(email).orElseThrow(()-> new BadRequestException("Otp with this email does not exists!"));
+        return otpRepository.findOtpByEmail(email)
+                .orElseThrow(()->
+                        new BadRequestException("Otp with this email does not exists!"));
     }
 }

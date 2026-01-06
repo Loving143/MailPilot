@@ -234,10 +234,41 @@ public class EmailServiceImpl implements EmailService {
 		Person person = personRepository.findByEmail(currentUsername).
 							orElseThrow(()->new BadRequestException("Person with email id does not exists!"));
 		RecentEmail recentEmail = recentEmailRepo.findByPersonId(person.getId()).orElseThrow(()->new RuntimeException("No recent email found!!"));
-		SendEmail(recentEmail,req);
+        saveEmailLog(req.getRecipientEmail());
+        SendEmail(recentEmail,req);
 		recentEmail.setRecipientEmail(req.getRecipientEmail());
 		recentEmailRepo.save(recentEmail);
 	}
+
+    public void saveEmailLog(String email) {
+        String userName = (String)SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            EmailLog log = new EmailLog();
+            if (repository.existsByRecipientEmail(email)) {
+                throw new BadRequestException("Email already exists.Please update status!!");
+            }
+            log.setRecipientEmail(email);
+            log.setSubject(EmailConstants.SUBJECT);
+            log.setSentAt(LocalDateTime.now());
+//            log.setMobNo(req.getMobNo());
+            log.setStatus(EmailStatus.EMAIL_SENT);
+
+            Optional<Person> person = personRepository.findByEmail(userName);
+            Person person1 = null;
+            if(person.isEmpty()) {
+                person1 = new Person();
+                person1.setEmail(userName);
+                person1.addEmails(log);
+
+            }else {
+                person1=person.get();
+                person1.addEmails(log);
+            }
+            person1 = personRepository.save(person1);
+        } catch (Exception e) {
+            throw new BadRequestException("Failed to save email: " + e.getMessage());
+        }
+    }
 	
 	public void SendEmail(RecentEmail recentEmail,QuickSendRequest req) {
 		 try { 
