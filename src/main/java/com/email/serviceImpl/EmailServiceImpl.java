@@ -230,7 +230,8 @@ public class EmailServiceImpl implements EmailService {
 
 	@Override
 	public void quickSend(QuickSendRequest req) {
-		Person person = personRepository.findByEmail(req.getPersonEmail()).
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
+		Person person = personRepository.findByEmail(currentUsername).
 							orElseThrow(()->new BadRequestException("Person with email id does not exists!"));
 		RecentEmail recentEmail = recentEmailRepo.findByPersonId(person.getId()).orElseThrow(()->new RuntimeException("No recent email found!!"));
 		SendEmail(recentEmail,req);
@@ -287,7 +288,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public List<EmailLogResponse> fetchAllEmails() {
-        String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String email = (String) SecurityContextHolder.getContext().getAuthentication().getName();
         Person person = personRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("User not found"));
         List<EmailLog> emails = repository.findByPersonId(person.getId());

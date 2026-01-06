@@ -76,7 +76,7 @@ public class RegistrationbServiceImpl implements RegistrationService {
 
     public void sendEmail(String email,String otp ){
     	Map<String, Object> model = new HashMap<>();
-        model.put("name","Ishika");
+        model.put("name","Prateek");
         model.put("email", email);
         model.put("subscription", "Premium");
         model.put("otp",otp);
@@ -89,7 +89,7 @@ public class RegistrationbServiceImpl implements RegistrationService {
             Template template = freemarkerConfig.getTemplate("emailTemplate.ftl");
             String htmlBody = FreeMarkerTemplateUtils.processTemplateIntoString(template,model);
             helper.setText(htmlBody, true);
-            ClassPathResource logoResource = new ClassPathResource("static/images/medicare.jpg");
+            ClassPathResource logoResource = new ClassPathResource("static/images/mailpilot.png");
             helper.addInline("logoImage", logoResource);
             mailSender.send(message);
 		 } catch (Exception e) {

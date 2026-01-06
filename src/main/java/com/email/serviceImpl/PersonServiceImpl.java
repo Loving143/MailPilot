@@ -31,12 +31,9 @@ public class PersonServiceImpl implements PersonService {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new BadRequestException("Invalid Authorization header");
         }
-
         String token = authHeader.substring(7);
-
         int updated = sessionRepository.invalidateSession(
                 token, LocalDateTime.now());
-
         if (updated == 0) {
             throw new BadRequestException("Session already invalid or not found");
         }
@@ -44,7 +41,7 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public UserProfileResponse fetchCurrentUserProfile() {
-      String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
             Person person = personRepository.findByEmail(currentUsername)
                     .orElseThrow(() -> new BadRequestException("User not found"));
             return new UserProfileResponse(person);
@@ -52,7 +49,7 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public void updateProfile(ProfileUpdateRequest req) {
-        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
         Person person = personRepository.findByEmail(currentUsername)
                 .orElseThrow(() -> new BadRequestException("User not found"));
         // Update profile logic here
