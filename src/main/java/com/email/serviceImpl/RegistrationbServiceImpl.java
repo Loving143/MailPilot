@@ -9,6 +9,8 @@ import java.util.Optional;
 
 import com.email.exception.BadRequestException;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -32,6 +34,9 @@ import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class RegistrationbServiceImpl implements RegistrationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(RegistrationbServiceImpl.class);
+
     @Autowired
     private PersonRepository personRepository;
 
@@ -48,40 +53,58 @@ public class RegistrationbServiceImpl implements RegistrationService {
     @Async
     @Transactional
     public void sendOtp(SendEmailOtpReq req) {
-        Optional<Person> person = personRepository.findByEmail(req.getEmail());
-        Person p1 = null;
-        if(person.isEmpty()){
-            p1 = new Person();
-            p1.setEmail(req.getEmail());
-        }else{
-            p1 = person.get();
+        logger.info("Sending OTP to email: {}", req.getEmail());
+        try {
+            Optional<Person> person = personRepository.findByEmail(req.getEmail());
+            Person p1 = null;
+            if(person.isEmpty()){
+                p1 = new Person();
+                p1.setEmail(req.getEmail());
+                logger.debug("Created new person for email: {}", req.getEmail());
+            }else{
+                p1 = person.get();
+                logger.debug("Found existing person for email: {}", req.getEmail());
+            }
+            Otp otp = generateOtp();
+            p1.addOtp(otp);
+            sendEmail(req.getEmail(),otp.getOtp()); 
+            personRepository.save(p1);
+            logger.info("OTP sent successfully to email: {}", req.getEmail());
+        } catch (Exception e) {
+            logger.error("Error sending OTP to email: {}", req.getEmail(), e);
+            throw e;
         }
-        Otp otp = generateOtp();
-        p1.addOtp(otp);
-        sendEmail(req.getEmail(),otp.getOtp()); 
-        personRepository.save(p1);
     }
     
 
     public Otp generateOtp(){
-        final SecureRandom random = new SecureRandom();
-        String otp = String.format("%06d", random.nextInt(1_000_000));
-        Otp newOtp = new Otp();
-        newOtp.setCreatedAt(LocalDateTime.now());
-        newOtp.setCurrentAttempts(1);
-        newOtp.setOtp(otp);
-        newOtp.setExpiryAt(LocalDateTime.now().plusMinutes(5));
-        return newOtp;
+        logger.debug("Generating new OTP");
+        try {
+            final SecureRandom random = new SecureRandom();
+            String otp = String.format("%06d", random.nextInt(1_000_000));
+            Otp newOtp = new Otp();
+            newOtp.setCreatedAt(LocalDateTime.now());
+            newOtp.setCurrentAttempts(1);
+            newOtp.setOtp(otp);
+            newOtp.setExpiryAt(LocalDateTime.now().plusMinutes(5));
+            logger.debug("OTP generated successfully with expiry: {}", newOtp.getExpiryAt());
+            return newOtp;
+        } catch (Exception e) {
+            logger.error("Error generating OTP", e);
+            throw e;
+        }
     }
 
     public void sendEmail(String email,String otp ){
-    	Map<String, Object> model = new HashMap<>();
-        model.put("name","Prateek");
-        model.put("email", email);
-        model.put("subscription", "Premium");
-        model.put("otp",otp);
-        model.put("bankName","Medicare");
+        logger.info("Sending OTP email to: {}", email);
         try {
+            Map<String, Object> model = new HashMap<>();
+            model.put("name","Prateek");
+            model.put("email", email);
+            model.put("subscription", "Premium");
+            model.put("otp",otp);
+            model.put("bankName","Medicare");
+            
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
             helper.setTo(email);
@@ -92,54 +115,78 @@ public class RegistrationbServiceImpl implements RegistrationService {
             ClassPathResource logoResource = new ClassPathResource("static/images/mailpilot.png");
             helper.addInline("logoImage", logoResource);
             mailSender.send(message);
-		 } catch (Exception e) {
-	            throw new BadRequestException("Failed to send email: " + e.getMessage());
-	        }
+            logger.info("OTP email sent successfully to: {}", email);
+        } catch (Exception e) {
+            logger.error("Error sending OTP email to: {}", email, e);
+            throw new BadRequestException("Failed to send email: " + e.getMessage());
+        }
     }
 
     @Override
     public void verifyOtp(VerifyOtpRequest req) {
-    	Person person = personRepository.findByEmail(req.getEmail()).orElseThrow(()-> new BadRequestException("Otp with email not found!!"));
-		Otp otp = otpRepo.findValidOtp(req.getOtp(),req.getEmail()).
-					orElseThrow(()->new RuntimeException("OTP expired or not found !!"));
-		LocalDateTime expiryTime = otp.getExpiryAt();
-		LocalDateTime currentTime = LocalDateTime.now();
-		
-		if (!otp.getOtp().equals(req.getOtp())) {
-	        throw new BadRequestException("Incorrect OTP");
-	    }
+        logger.info("Verifying OTP for email: {}", req.getEmail());
+        try {
+            Person person = personRepository.findByEmail(req.getEmail()).orElseThrow(()-> new BadRequestException("Otp with email not found!!"));
+            Otp otp = otpRepo.findValidOtp(req.getOtp(),req.getEmail()).
+                        orElseThrow(()->new RuntimeException("OTP expired or not found !!"));
+            LocalDateTime expiryTime = otp.getExpiryAt();
+            LocalDateTime currentTime = LocalDateTime.now();
+            
+            if (!otp.getOtp().equals(req.getOtp())) {
+                logger.warn("Incorrect OTP provided for email: {}", req.getEmail());
+                throw new BadRequestException("Incorrect OTP");
+            }
 
-	    long diffInMinutes = Duration.between(expiryTime, currentTime).toMinutes();
+            long diffInMinutes = Duration.between(expiryTime, currentTime).toMinutes();
 
-	    if (diffInMinutes > 5) {
-	        throw new BadRequestException("OTP expired");
-	    }
-	    otp.setUsed(true);
-	    otpRepo.save(otp);
-		
+            if (diffInMinutes > 5) {
+                logger.warn("Expired OTP used for email: {}", req.getEmail());
+                throw new BadRequestException("OTP expired");
+            }
+            otp.setUsed(true);
+            otpRepo.save(otp);
+            logger.info("OTP verified successfully for email: {}", req.getEmail());
+        } catch (Exception e) {
+            logger.error("Error verifying OTP for email: {}", req.getEmail(), e);
+            throw e;
+        }
     }
 
     @Override
     public boolean verifyOtp(String email, String otpp) {
-        Person person = personRepository.findByEmail(email).orElseThrow(()-> new BadRequestException("Otp with email not found!!"));
-        System.out.println(email +" "+otpp+"dvyhdey");
-        Optional<Otp> otpOptiuonal = otpRepo.findValidOtp(otpp,email);
-        System.out.println(otpOptiuonal);
-        Otp otp = otpOptiuonal.get();
-
+        logger.info("Verifying OTP for email: {} (boolean method)", email);
+        try {
+            Person person = personRepository.findByEmail(email).orElseThrow(()-> new BadRequestException("Otp with email not found!!"));
+            logger.debug("OTP verification attempt for email: {} with OTP: {}", email, otpp);
+            Optional<Otp> otpOptional = otpRepo.findValidOtp(otpp,email);
+            logger.debug("OTP lookup result: {}", otpOptional.isPresent());
+            
+            if (otpOptional.isEmpty()) {
+                logger.warn("No valid OTP found for email: {}", email);
+                return false;
+            }
+            
+            Otp otp = otpOptional.get();
             LocalDateTime expiryTime = otp.getExpiryAt();
             LocalDateTime currentTime = LocalDateTime.now();
 
-        if (!otp.getOtp().equals(otpp)) {
+            if (!otp.getOtp().equals(otpp)) {
+                logger.warn("Incorrect OTP provided for email: {}", email);
+                return false;
+            }
+
+            long diffInMinutes = Duration.between(expiryTime, currentTime).toMinutes();
+
+            if (diffInMinutes > 5) {
+                logger.warn("Expired OTP used for email: {}", email);
+                return false;
+            }
+            otpRepo.save(otp);
+            logger.info("OTP verified successfully for email: {} (boolean method)", email);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error verifying OTP for email: {} (boolean method)", email, e);
             return false;
         }
-
-        long diffInMinutes = Duration.between(expiryTime, currentTime).toMinutes();
-
-        if (diffInMinutes > 5) {
-            return false;
-        }
-        otpRepo.save(otp);
-        return true;
     }
 }
