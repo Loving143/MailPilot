@@ -21,13 +21,13 @@ public class IntentCategoryController {
 
     @PostMapping("/create/category")
     public ResponseEntity<?> createCategory(@RequestBody IntentCategoryRequest req) {
-        logger.info("Creating new intent category: {}", req.getCategoryName());
+        logger.info("Creating new intent category: {}", req.getName());
         try {
             var result = categoryService.createCategory(req);
-            logger.info("Intent category created successfully: {}", req.getCategoryName());
+            logger.info("Intent category created successfully: {}", req.getName());
             return ResponseEntity.ok(new ApiResponse("1", result));
         } catch (Exception e) {
-            logger.error("Error creating intent category: {}", req.getCategoryName(), e);
+            logger.error("Error creating intent category: {}", req.getName(), e);
             throw e;
         }
     }

@@ -22,13 +22,13 @@ public class IntentCodeController {
 	
 	@PostMapping("/create/intent-code")
 	public ResponseEntity<?> createIntentCode(@RequestBody IntentCodeRequest req){
-        logger.info("Creating new intent code: {}", req.getIntentCode());
+        logger.info("Creating new intent code: {}", req.getCode());
         try {
             intentCodeService.registerIntentCode(req);
-            logger.info("Intent code created successfully: {}", req.getIntentCode());
+            logger.info("Intent code created successfully: {}", req.getCode());
             return ResponseEntity.ok(new ApiResponse("1","Intentcode saved successfully."));
         } catch (Exception e) {
-            logger.error("Error creating intent code: {}", req.getIntentCode(), e);
+            logger.error("Error creating intent code: {}", req.getCode(), e);
             throw e;
         }
 	}
