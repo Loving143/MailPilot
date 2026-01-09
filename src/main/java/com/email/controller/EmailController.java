@@ -22,6 +22,7 @@ import jakarta.mail.MessagingException;
 
 @RestController
 @RequestMapping("/email")
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class EmailController {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailController.class);

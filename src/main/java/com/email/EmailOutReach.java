@@ -13,14 +13,13 @@ public class EmailOutReach {
 	private static final Logger logger = LoggerFactory.getLogger(EmailOutReach.class);
 
 	public static void main(String[] args) {
-		logger.info("Starting EmailOutReach application...");
+		logger.info("Starting EmailOutReach application with CORS support...");
 		try {
 			SpringApplication.run(EmailOutReach.class, args);
-			logger.info("EmailOutReach application started successfully");
+			logger.info("EmailOutReach application started successfully with CORS enabled");
 		} catch (Exception e) {
 			logger.error("Failed to start EmailOutReach application", e);
 			throw e;
 		}
 	}
-
 }
