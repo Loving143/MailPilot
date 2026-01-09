@@ -100,13 +100,13 @@ public class EmailController {
     @PreAuthorize("hasRole('USER')")
     @PostMapping("quick-send")
     public ResponseEntity<?> quickSend(@RequestBody QuickSendRequest req){
-        logger.info("Quick send request received for email: {}", req.getEmail());
+        logger.info("Quick send request received for email: {}", req.getRecipientEmail());
         try {
             service.quickSend(req);
-            logger.info("Quick send completed successfully for: {}", req.getEmail());
+            logger.info("Quick send completed successfully for: {}", req.getRecipientEmail());
             return ResponseEntity.ok(new ApiResponse("1","Message sent successfully!!"));
         } catch (Exception e) {
-            logger.error("Error in quick send for email: {}", req.getEmail(), e);
+            logger.error("Error in quick send for email: {}", req.getRecipientEmail(), e);
             throw e;
         }
     }
