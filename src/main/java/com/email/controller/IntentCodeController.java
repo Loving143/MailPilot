@@ -12,7 +12,7 @@ import com.email.resposne.IntentCodeResponse;
 import com.email.service.IntentCodeService;
 
 @RestController
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(originPatterns = "*", maxAge = 3600, allowCredentials = "true")
 public class IntentCodeController {
 
     private static final Logger logger = LoggerFactory.getLogger(IntentCodeController.class);

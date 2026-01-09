@@ -11,7 +11,7 @@ import com.email.request.IntentCategoryRequest;
 import com.email.service.IntentCategoryService;
 
 @RestController
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(originPatterns = "*", maxAge = 3600, allowCredentials = "true")
 public class IntentCategoryController {
 
     private static final Logger logger = LoggerFactory.getLogger(IntentCategoryController.class);

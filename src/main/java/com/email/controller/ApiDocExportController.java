@@ -16,7 +16,7 @@ import com.email.serviceImpl.ApiExcelExporter;
 import com.email.serviceImpl.ApiExtractionService;
 
 @RestController
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(originPatterns = "*", maxAge = 3600, allowCredentials = "true")
 public class ApiDocExportController {
 
     private static final Logger logger = LoggerFactory.getLogger(ApiDocExportController.class);

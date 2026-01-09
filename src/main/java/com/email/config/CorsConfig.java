@@ -34,7 +34,7 @@ public class CorsConfig implements WebMvcConfigurer {
         logger.info("Creating CORS configuration source");
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Allow all origins (for development - restrict in production)
+        // Use allowedOriginPatterns instead of allowedOrigins when allowCredentials is true
         configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         
         // Allow common HTTP methods
