@@ -6,21 +6,38 @@ public class ApiResponse<T> {
     private String message;
     private T data;
 
-    public ApiResponse(String status,  T data) {
+    public ApiResponse(String status, T data) {
         this.status = status;
         this.data = data;
     }
 
+    public ApiResponse(String status, String message) {
+        this.status = status;
+        this.message = message;
+    }
+
+    public ApiResponse(String status, String message, T data) {
+        this.status = status;
+        this.message = message;
+        this.data = data;
+    }
+
     public static <T> ApiResponse<T> success(String message, T data) {
-        return new ApiResponse<>("SUCCESS", data);
+        return new ApiResponse<>("SUCCESS", message, data);
     }
 
     public static <T> ApiResponse<T> failure(String message) {
-        return new ApiResponse<>("FAILURE", null);
+        return new ApiResponse<>("FAILURE", message);
     }
 
     // getters & setters
+    public String getMessage() {
+        return message;
+    }
 
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
     public T getData() {
         return data;

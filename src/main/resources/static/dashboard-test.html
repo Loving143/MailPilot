@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Statistics Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #333;
+        }
+        .stat-growth {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .growth-positive { color: #4CAF50; }
+        .growth-negative { color: #f44336; }
+        .growth-neutral { color: #666; }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .detailed-stats {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .status-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .status-item {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .error {
+            color: red;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Dashboard Statistics</h1>
+    
+    <div class="controls">
+        <button class="button" onclick="loadDashboardStats()">Load Dashboard Stats</button>
+        <button class="button" onclick="loadDetailedStats()">Load Detailed Stats</button>
+        <button class="button" onclick="loadQuickStats()">Load Quick Stats</button>
+        <button class="button" onclick="loadStatsByPeriod('week')">This Week</button>
+        <button class="button" onclick="loadStatsByPeriod('month')">This Month</button>
+    </div>
+
+    <div id="dashboard" class="dashboard">
+        <!-- Dashboard cards will be populated here -->
+    </div>
+
+    <div id="detailed-stats" class="detailed-stats" style="display: none;">
+        <h2>Detailed Statistics</h2>
+        <div id="detailed-content"></div>
+    </div>
+
+    <div id="error-message" class="error" style="display: none;"></div>
+
+    <script>
+        const API_BASE = '/api/dashboard';
+        const TOKEN = 'your-jwt-token-here'; // Replace with actual token
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = message;
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showLoading(elementId) {
+            document.getElementById(elementId).innerHTML = '<div class="loading">Loading...</div>';
+        }
+
+        function getGrowthClass(growth) {
+            if (growth.startsWith('+')) return 'growth-positive';
+            if (growth.startsWith('-')) return 'growth-negative';
+            return 'growth-neutral';
+        }
+
+        async function loadDashboardStats() {
+            try {
+                showLoading('dashboard');
+                
+                const response = await fetch(`${API_BASE}/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.status === '1') {
+                    const data = result.data;
+                    displayDashboardStats(data);
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                showError(`Error loading dashboard stats: ${error.message}`);
+                document.getElementById('dashboard').innerHTML = '';
+            }
+        }
+
+        function displayDashboardStats(data) {
+            const dashboard = document.getElementById('dashboard');
+            dashboard.innerHTML = `
+                <div class="stat-card">
+                    <h3>📧 Total Emails</h3>
+                    <div class="stat-value">${data.totalEmails}</div>
+                    <div class="stat-growth ${getGrowthClass(data.totalEmailsGrowth)}">${data.totalEmailsGrowth}</div>
+                    <small>All time campaigns</small>
+                </div>
+                <div class="stat-card">
+                    <h3>🚀 Sent Today</h3>
+                    <div class="stat-value">${data.sentToday}</div>
+                    <div class="stat-growth ${getGrowthClass(data.sentTodayGrowth)}">${data.sentTodayGrowth}</div>
+                    <small>Daily performance</small>
+                </div>
+                <div class="stat-card">
+                    <h3>📈 Response Rate</h3>
+                    <div class="stat-value">${data.responseRate.toFixed(1)}%</div>
+                    <div class="stat-growth ${getGrowthClass(data.responseRateGrowth)}">${data.responseRateGrowth}</div>
+                    <small>Engagement metrics</small>
+                </div>
+                <div class="stat-card">
+                    <h3>🎯 Active Campaigns</h3>
+                    <div class="stat-value">${data.activeCampaigns}</div>
+                    <div class="stat-growth ${getGrowthClass(data.activeCampaignsGrowth)}">${data.activeCampaignsGrowth}</div>
+                    <small>Running campaigns</small>
+                </div>
+            `;
+        }
+
+        async function loadDetailedStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats/detailed`, {
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.status === '1') {
+                    const data = result.data;
+                    displayDetailedStats(data);
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                showError(`Error loading detailed stats: ${error.message}`);
+            }
+        }
+
+        function displayDetailedStats(data) {
+            const detailedDiv = document.getElementById('detailed-stats');
+            const contentDiv = document.getElementById('detailed-content');
+            
+            let statusBreakdownHtml = '';
+            if (data.statusBreakdown) {
+                statusBreakdownHtml = '<h3>Status Breakdown</h3><div class="status-breakdown">';
+                for (const [status, count] of Object.entries(data.statusBreakdown)) {
+                    statusBreakdownHtml += `
+                        <div class="status-item">
+                            <strong>${count}</strong><br>
+                            <small>${status}</small>
+                        </div>
+                    `;
+                }
+                statusBreakdownHtml += '</div>';
+            }
+            
+            contentDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <h4>📊 Email Metrics</h4>
+                        <p><strong>Total Emails:</strong> ${data.totalEmails}</p>
+                        <p><strong>Sent Today:</strong> ${data.sentToday}</p>
+                        <p><strong>Sent This Week:</strong> ${data.sentThisWeek}</p>
+                        <p><strong>Sent This Month:</strong> ${data.sentThisMonth}</p>
+                    </div>
+                    <div>
+                        <h4>📈 Performance</h4>
+                        <p><strong>Response Rate:</strong> ${data.responseRate.toFixed(1)}%</p>
+                        <p><strong>Total Responses:</strong> ${data.totalResponses}</p>
+                        <p><strong>Avg Response Time:</strong> ${data.averageResponseTime}</p>
+                    </div>
+                    <div>
+                        <h4>🎯 Campaigns</h4>
+                        <p><strong>Active Campaigns:</strong> ${data.activeCampaigns}</p>
+                        <p><strong>Unique Companies:</strong> ${data.uniqueCompanies}</p>
+                    </div>
+                </div>
+                ${statusBreakdownHtml}
+            `;
+            
+            detailedDiv.style.display = 'block';
+        }
+
+        async function loadQuickStats() {
+            try {
+                const response = await fetch(`${API_BASE}/quick-stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.status === '1') {
+                    const data = result.data;
+                    displayQuickStats(data);
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                showError(`Error loading quick stats: ${error.message}`);
+            }
+        }
+
+        function displayQuickStats(data) {
+            const dashboard = document.getElementById('dashboard');
+            dashboard.innerHTML = `
+                <div class="stat-card">
+                    <h3>📧 Total Emails</h3>
+                    <div class="stat-value">${data.totalEmails}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>🚀 Sent Today</h3>
+                    <div class="stat-value">${data.sentToday}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>📈 Response Rate</h3>
+                    <div class="stat-value">${data.responseRate}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>🎯 Active Campaigns</h3>
+                    <div class="stat-value">${data.activeCampaigns}</div>
+                </div>
+            `;
+        }
+
+        async function loadStatsByPeriod(period) {
+            try {
+                showLoading('dashboard');
+                
+                const response = await fetch(`${API_BASE}/stats/period/${period}`, {
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.status === '1') {
+                    const data = result.data;
+                    displayDetailedStats(data);
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                showError(`Error loading stats for ${period}: ${error.message}`);
+                document.getElementById('dashboard').innerHTML = '';
+            }
+        }
+
+        // Load dashboard stats on page load
+        window.onload = function() {
+            loadDashboardStats();
+        };
+    </script>
+</body>
+</html>

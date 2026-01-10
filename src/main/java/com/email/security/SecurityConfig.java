@@ -45,6 +45,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/send-otp", "/verify-otp").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/dashboard/**").authenticated()
+                        .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/email/**").authenticated()
+                        .requestMatchers("/resume/**").authenticated()
+                        .requestMatchers("/*.html", "/css/**", "/js/**", "/images/**", "/static/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -53,6 +58,7 @@ public class SecurityConfig {
                 );
         
         logger.info("Security filter chain configured successfully");
+        logger.info("Dashboard endpoints (/api/dashboard/**) configured to require authentication");
         return http.build();
     }
 

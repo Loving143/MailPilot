@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Download Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>Excel Download Test</h1>
+    
+    <h2>Method 1: Direct Binary Download</h2>
+    <p>This method downloads the Excel file directly as binary data.</p>
+    <button class="button" onclick="downloadExcelBinary()">Download Excel (Binary)</button>
+    
+    <h2>Method 2: Base64 Download</h2>
+    <p>This method gets the Excel file as Base64 encoded string and converts it to download.</p>
+    <button class="button" onclick="downloadExcelBase64()">Download Excel (Base64)</button>
+    
+    <h2>Method 3: Email Excel</h2>
+    <p>This method generates and sends the Excel file via email.</p>
+    <button class="button" onclick="emailExcel()">Email Excel Report</button>
+    
+    <div id="result" class="result" style="display: none;"></div>
+
+    <script>
+        const API_BASE = '/email';
+        const TOKEN = 'your-jwt-token-here'; // Replace with actual token
+
+        function showResult(message, isError = false) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = `result ${isError ? 'error' : 'success'}`;
+            resultDiv.innerHTML = message;
+        }
+
+        async function downloadExcelBinary() {
+            try {
+                showResult('Generating Excel file...');
+                
+                const response = await fetch(`${API_BASE}/generate/excel`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `email_logs_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showResult('Excel file downloaded successfully!');
+            } catch (error) {
+                showResult(`Error downloading Excel: ${error.message}`, true);
+            }
+        }
+
+        async function downloadExcelBase64() {
+            try {
+                showResult('Generating Excel file...');
+                
+                const response = await fetch(`${API_BASE}/generate/excel/base64`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.status === '1') {
+                    const { fileName, fileContent, mimeType } = result.data;
+                    
+                    // Convert base64 to blob
+                    const byteCharacters = atob(fileContent);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: mimeType });
+                    
+                    // Download the file
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showResult('Excel file downloaded successfully!');
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                showResult(`Error downloading Excel: ${error.message}`, true);
+            }
+        }
+
+        async function emailExcel() {
+            try {
+                showResult('Generating and sending Excel file...');
+                
+                const response = await fetch(`${API_BASE}/generate/excel/email`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.status === '1') {
+                    showResult('Excel file generated and sent via email successfully!');
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                showResult(`Error emailing Excel: ${error.message}`, true);
+            }
+        }
+    </script>
+</body>
+</html>

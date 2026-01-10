@@ -1,16 +1,36 @@
 package com.email.request;
 
 import com.email.constants.EmailStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
 public class HrDetailsRequest {
 	
+	@JsonProperty("email")
+	@NotBlank(message = "Email cannot be blank")
+	@Email(message = "Email should be valid")
 	private String email;
+	
+	@JsonProperty("mobNo")
 	private String mobNo;
+	
+	@JsonProperty("status")
     private EmailStatus status;
+    
+    @JsonProperty("name")
     private String name;
+    
+    @JsonProperty("company")
     private String company;
+    
+    @JsonProperty("personEmail")
     private String personEmail;
+    
+    @JsonProperty("body")
     private String body;
+    
+    @JsonProperty("subject")
     private String subject;
 
     public String getEmail() {
@@ -71,5 +91,16 @@ public class HrDetailsRequest {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    @Override
+    public String toString() {
+        return "HrDetailsRequest{" +
+                "email='" + email + '\'' +
+                ", status=" + status +
+                ", mobNo='" + mobNo + '\'' +
+                ", name='" + name + '\'' +
+                ", company='" + company + '\'' +
+                '}';
     }
 }

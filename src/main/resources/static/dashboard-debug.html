@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard API Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .button { background: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; margin: 5px; }
+        .result { background: #f9f9f9; padding: 10px; margin: 10px 0; border-left: 4px solid #4CAF50; }
+        .error { border-left-color: #f44336; background: #ffebee; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Dashboard API Debug Tool</h1>
+    
+    <div class="test-section">
+        <h2>Authentication Test</h2>
+        <input type="text" id="token" placeholder="Enter JWT Token" style="width: 400px; padding: 5px;">
+        <button class="button" onclick="setToken()">Set Token</button>
+        <div id="token-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Basic Tests</h2>
+        <button class="button" onclick="testEndpoint('/api/test/hello')">Test Controller</button>
+        <button class="button" onclick="testEndpoint('/api/dashboard/test')">Dashboard Test</button>
+        <button class="button" onclick="testEndpoint('/api/dashboard/ping')">Dashboard Ping</button>
+        <button class="button" onclick="testEndpoint('/api/dashboard/health')">Health Check</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Dashboard APIs</h2>
+        <button class="button" onclick="testEndpoint('/api/dashboard/stats')">Dashboard Stats</button>
+        <button class="button" onclick="testEndpoint('/api/dashboard/stats/detailed')">Detailed Stats</button>
+        <button class="button" onclick="testEndpoint('/api/dashboard/summary')">Summary</button>
+        <button class="button" onclick="testEndpoint('/api/dashboard/quick-stats')">Quick Stats</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Period Tests</h2>
+        <button class="button" onclick="testEndpoint('/api/dashboard/stats/period/today')">Today</button>
+        <button class="button" onclick="testEndpoint('/api/dashboard/stats/period/week')">Week</button>
+        <button class="button" onclick="testEndpoint('/api/dashboard/stats/period/month')">Month</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        let authToken = '';
+
+        function setToken() {
+            authToken = document.getElementById('token').value;
+            document.getElementById('token-status').innerHTML = 
+                authToken ? '<span style="color: green;">Token set</span>' : '<span style="color: red;">No token</span>';
+        }
+
+        async function testEndpoint(endpoint) {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                console.log(`Testing endpoint: ${endpoint}`);
+                
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': authToken ? `Bearer ${authToken}` : '',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                console.log(`Response status: ${response.status}`);
+                console.log(`Response headers:`, response.headers);
+
+                let responseText;
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    const jsonData = await response.json();
+                    responseText = JSON.stringify(jsonData, null, 2);
+                } else {
+                    responseText = await response.text();
+                }
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = response.ok ? 'result' : 'result error';
+                resultDiv.innerHTML = `
+                    <h3>${endpoint}</h3>
+                    <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                    <p><strong>Content-Type:</strong> ${contentType || 'Not specified'}</p>
+                    <pre>${responseText}</pre>
+                `;
+                
+                resultsDiv.insertBefore(resultDiv, resultsDiv.firstChild);
+
+            } catch (error) {
+                console.error('Error testing endpoint:', error);
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>${endpoint}</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <pre>${error.stack || 'No stack trace available'}</pre>
+                `;
+                
+                resultsDiv.insertBefore(resultDiv, resultsDiv.firstChild);
+            }
+        }
+
+        // Test basic connectivity on load
+        window.onload = function() {
+            console.log('Dashboard Debug Tool loaded');
+            testEndpoint('/api/dashboard/test');
+        };
+    </script>
+</body>
+</html>

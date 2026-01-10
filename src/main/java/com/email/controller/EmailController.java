@@ -2,6 +2,8 @@ package com.email.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.email.exception.ApiResponse;
 import jakarta.transaction.Transactional;
@@ -67,16 +69,77 @@ public class EmailController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @GetMapping("generate/excel")
-    public ResponseEntity<?> generateExcel() throws IOException, MessagingException {
-        logger.info("Generating Excel report");
+    @PutMapping("update/status/single")
+    public ResponseEntity<?> updateSingleEmailStatus(@RequestBody HrDetailsRequest hrDetails) {
+        logger.info("Received request to update status for single email: {}", hrDetails.getEmail());
         try {
-            ByteArrayInputStream excel =  service.generateExcel();
-            service.sendExcel("Prateek.kumar949@gmail.com", excel.readAllBytes());
-            logger.info("Excel report generated and sent successfully");
-            return ResponseEntity.ok(new ApiResponse("1","Excel generated successfully"));
+            logger.debug("Updating status for email: {} to status: {}", hrDetails.getEmail(), hrDetails.getStatus());
+            service.updateEmailStatus(hrDetails.getEmail(), hrDetails.getStatus(), hrDetails.getMobNo());
+            logger.info("Successfully updated status for email: {}", hrDetails.getEmail());
+            return ResponseEntity.ok(new ApiResponse("1","Email status updated successfully"));
+        } catch (Exception e) {
+            logger.error("Error updating email status for: {}", hrDetails.getEmail(), e);
+            throw e;
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("generate/excel")
+    public ResponseEntity<byte[]> generateExcel() throws IOException {
+        logger.info("Generating Excel report for download");
+        try {
+            ByteArrayInputStream excel = service.generateExcel();
+            byte[] excelBytes = excel.readAllBytes();
+            
+            logger.info("Excel report generated successfully, size: {} bytes", excelBytes.length);
+            
+            return ResponseEntity.ok()
+                    .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    .header("Content-Disposition", "attachment; filename=\"email_logs_" + 
+                            java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")) + ".xlsx\"")
+                    .header("Content-Length", String.valueOf(excelBytes.length))
+                    .body(excelBytes);
         } catch (Exception e) {
             logger.error("Error generating Excel report", e);
+            throw e;
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("generate/excel/email")
+    public ResponseEntity<?> generateAndEmailExcel() throws IOException, MessagingException {
+        logger.info("Generating and emailing Excel report");
+        try {
+            ByteArrayInputStream excel = service.generateExcel();
+            service.sendExcel("Prateek.kumar949@gmail.com", excel.readAllBytes());
+            logger.info("Excel report generated and sent via email successfully");
+            return ResponseEntity.ok(new ApiResponse("1","Excel generated and sent via email successfully"));
+        } catch (Exception e) {
+            logger.error("Error generating and emailing Excel report", e);
+            throw e;
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("generate/excel/base64")
+    public ResponseEntity<?> generateExcelAsBase64() throws IOException {
+        logger.info("Generating Excel report as Base64");
+        try {
+            ByteArrayInputStream excel = service.generateExcel();
+            byte[] excelBytes = excel.readAllBytes();
+            String base64Excel = java.util.Base64.getEncoder().encodeToString(excelBytes);
+            
+            logger.info("Excel report generated as Base64, size: {} bytes", excelBytes.length);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("fileName", "email_logs_" + 
+                    java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")) + ".xlsx");
+            response.put("fileContent", base64Excel);
+            response.put("mimeType", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            
+            return ResponseEntity.ok(new ApiResponse("1", "Excel generated successfully", response));
+        } catch (Exception e) {
+            logger.error("Error generating Excel report as Base64", e);
             throw e;
         }
     }
