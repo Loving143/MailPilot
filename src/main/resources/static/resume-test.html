@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .button.delete {
+            background-color: #f44336;
+        }
+        .button.delete:hover {
+            background-color: #da190b;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .success {
+            border-left: 4px solid #4CAF50;
+            background-color: #dff0d8;
+        }
+        .error {
+            border-left: 4px solid #f44336;
+            background-color: #f2dede;
+        }
+        .info {
+            border-left: 4px solid #5bc0de;
+            background-color: #d9edf7;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        input[type="text"] {
+            width: 300px;
+            padding: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 Resume API Test Tool</h1>
+    
+    <div class="section">
+        <h2>Authentication</h2>
+        <input type="text" id="token" placeholder="Enter JWT Token" style="width: 400px;">
+        <button class="button" onclick="setToken()">Set Token</button>
+        <div id="token-status"></div>
+    </div>
+
+    <div class="section">
+        <h2>Resume Status</h2>
+        <p>Check if the authenticated user has an uploaded resume</p>
+        <button class="button" onclick="checkResumeStatus()">Check Resume Status</button>
+        <div id="status-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>Upload Resume</h2>
+        <p>Upload a new resume file (PDF, DOC, DOCX)</p>
+        <input type="file" id="resumeFile" accept=".pdf,.doc,.docx">
+        <button class="button" onclick="uploadResume()">Upload Resume</button>
+        <div id="upload-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>Delete Resume</h2>
+        <p>Delete the current resume file</p>
+        <button class="button delete" onclick="deleteResume()">Delete Resume</button>
+        <div id="delete-result"></div>
+    </div>
+
+    <script>
+        let authToken = '';
+
+        function setToken() {
+            authToken = document.getElementById('token').value;
+            const statusDiv = document.getElementById('token-status');
+            if (authToken) {
+                statusDiv.innerHTML = '<span style="color: green;">✓ Token set</span>';
+            } else {
+                statusDiv.innerHTML = '<span style="color: red;">✗ No token</span>';
+            }
+        }
+
+        function showResult(elementId, message, type = 'info', data = null) {
+            const resultDiv = document.getElementById(elementId);
+            let content = `<div class="${type}"><strong>${message}</strong>`;
+            
+            if (data) {
+                content += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            
+            content += '</div>';
+            resultDiv.innerHTML = content;
+        }
+
+        async function checkResumeStatus() {
+            if (!authToken) {
+                showResult('status-result', 'Please set JWT token first', 'error');
+                return;
+            }
+
+            try {
+                showResult('status-result', 'Checking resume status...', 'info');
+                
+                const response = await fetch('/resume/status', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.status === '1') {
+                    const hasResume = result.data.hasResume;
+                    const message = hasResume ? 
+                        `Resume found: ${result.data.fileName}` : 
+                        'No resume uploaded';
+                    showResult('status-result', message, hasResume ? 'success' : 'info', result.data);
+                } else {
+                    showResult('status-result', `Error: ${result.message || 'Unknown error'}`, 'error', result);
+                }
+            } catch (error) {
+                showResult('status-result', `Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function uploadResume() {
+            if (!authToken) {
+                showResult('upload-result', 'Please set JWT token first', 'error');
+                return;
+            }
+
+            const fileInput = document.getElementById('resumeFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showResult('upload-result', 'Please select a file to upload', 'error');
+                return;
+            }
+
+            try {
+                showResult('upload-result', 'Uploading resume...', 'info');
+                
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/resume/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.status === '1') {
+                    showResult('upload-result', 'Resume uploaded successfully!', 'success', result);
+                    // Auto-refresh status
+                    setTimeout(checkResumeStatus, 1000);
+                } else {
+                    showResult('upload-result', `Upload failed: ${result.message || 'Unknown error'}`, 'error', result);
+                }
+            } catch (error) {
+                showResult('upload-result', `Upload error: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteResume() {
+            if (!authToken) {
+                showResult('delete-result', 'Please set JWT token first', 'error');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete your resume?')) {
+                return;
+            }
+
+            try {
+                showResult('delete-result', 'Deleting resume...', 'info');
+                
+                const response = await fetch('/resume/delete', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.status === '1') {
+                    showResult('delete-result', 'Resume deleted successfully!', 'success', result);
+                    // Auto-refresh status
+                    setTimeout(checkResumeStatus, 1000);
+                } else {
+                    showResult('delete-result', `Delete failed: ${result.message || 'Unknown error'}`, 'error', result);
+                }
+            } catch (error) {
+                showResult('delete-result', `Delete error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-check status on page load
+        window.onload = function() {
+            console.log('Resume API Test Tool loaded');
+        };
+    </script>
+</body>
+</html>

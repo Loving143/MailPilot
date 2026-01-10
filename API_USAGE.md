@@ -137,6 +137,69 @@ The `status` field accepts these values:
 - Returns simplified stats for quick display
 - Optimized for mobile or widget displays
 
+### Resume Management Endpoints
+
+#### 1. Check Resume Status
+**GET** `/resume/status`
+- Returns whether the authenticated user has an uploaded resume
+- Includes file details if resume exists
+
+**Response (Resume exists):**
+```json
+{
+  "status": "1",
+  "message": "Resume found",
+  "data": {
+    "hasResume": true,
+    "fileName": "user_example_com_Resume.pdf",
+    "fileSize": 245760,
+    "lastModified": "2026-01-10 15:30:45",
+    "filePath": "/path/to/resume/user_example_com_Resume.pdf"
+  }
+}
+```
+
+**Response (No resume):**
+```json
+{
+  "status": "1",
+  "message": "No resume uploaded",
+  "data": {
+    "hasResume": false,
+    "fileName": null,
+    "fileSize": null,
+    "lastModified": null,
+    "filePath": null
+  }
+}
+```
+
+#### 2. Upload Resume
+**POST** `/resume/upload`
+- Upload a resume file (PDF, DOC, DOCX)
+- Content-Type: multipart/form-data
+- Parameter: `file` (multipart file)
+
+**Response:**
+```json
+{
+  "status": "1",
+  "message": "Resume uploaded successfully"
+}
+```
+
+#### 3. Delete Resume
+**DELETE** `/resume/delete`
+- Delete the current user's resume file
+
+**Response:**
+```json
+{
+  "status": "1",
+  "message": "Resume deleted successfully"
+}
+```
+
 ### User Management Endpoints
 
 #### 1. User Logout
