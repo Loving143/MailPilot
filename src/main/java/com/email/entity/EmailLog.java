@@ -25,6 +25,8 @@ private String company;
 @ManyToOne(fetch = FetchType.LAZY)
 @JoinColumn(name = "parent_id")
 private Person person;
+private Integer reminderCount=0;
+private String description;
 
     public Person getPerson() {
         return person;
@@ -81,5 +83,33 @@ public void setMobNo(String mobNo) {
 
     public void setCompany(String company) {
         this.company = company;
+    }
+
+    public void setReminderCount(Integer reminderCount) {
+        this.reminderCount = reminderCount;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public int getReminderCount() {
+        return reminderCount != null ? reminderCount : 0;
+    }
+
+    public void setReminderCount(int reminderCount) {
+        this.reminderCount = reminderCount;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

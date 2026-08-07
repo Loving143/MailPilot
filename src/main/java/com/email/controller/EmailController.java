@@ -2,6 +2,7 @@ package com.email.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,6 +52,12 @@ public class EmailController {
         }
     }
 
+    @GetMapping("/test-dns")
+    public String testDns() throws Exception {
+        InetAddress address = InetAddress.getByName("smtp.gmail.com");
+        return address.getHostAddress();
+    }
+
     @PreAuthorize("hasRole('USER')")
     @PutMapping("update/status")
     public  ResponseEntity<?> updateEmailStatus(@RequestBody HrDetailsList hrDetails) {
@@ -58,7 +65,7 @@ public class EmailController {
         try {
             for (HrDetailsRequest req: hrDetails.getHrDetails()) {
                 logger.debug("Updating status for email: {} to status: {}", req.getEmail(), req.getStatus());
-                service.updateEmailStatus(req.getEmail(),req.getStatus(),req.getMobNo());
+                service.updateEmailStatus(req.getEmail(),req.getStatus(),req.getMobNo(),req.getDescription());
             }
             logger.info("Successfully updated status for {} emails", hrDetails.getHrDetails().size());
             return ResponseEntity.ok(new ApiResponse("1","Emails updated successfully"));
@@ -74,7 +81,7 @@ public class EmailController {
         logger.info("Received request to update status for single email: {}", hrDetails.getEmail());
         try {
             logger.debug("Updating status for email: {} to status: {}", hrDetails.getEmail(), hrDetails.getStatus());
-            service.updateEmailStatus(hrDetails.getEmail(), hrDetails.getStatus(), hrDetails.getMobNo());
+            service.updateEmailStatus(hrDetails.getEmail(), hrDetails.getStatus(), hrDetails.getMobNo(),hrDetails.getDescription());
             logger.info("Successfully updated status for email: {}", hrDetails.getEmail());
             return ResponseEntity.ok(new ApiResponse("1","Email status updated successfully"));
         } catch (Exception e) {
@@ -175,6 +182,8 @@ public class EmailController {
         }
     }
 
+
+
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/send/intent-email")
     public ResponseEntity<?>sendIntentEmail(@RequestBody EmailIntentRequest req){
@@ -205,7 +214,7 @@ public class EmailController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/fetch/{id}")
-    public ResponseEntity<?> fetchEmailById(@RequestBody Long id) {
+    public ResponseEntity<?> fetchEmailById(@PathVariable Long id) {
         logger.info("Fetching email by ID: {}", id);
         try {
             var result = service.fetchEmailById(id);

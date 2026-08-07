@@ -20,7 +20,8 @@ public interface EmailLogRepository extends JpaRepository<EmailLog, Long>{
     @Query("SELECT e " +
             " FROM EmailLog e " +
             " inner join e.person p " +
-            " WHERE p.id = :id ")
+            " WHERE p.id = :id " +
+            " order by e.sentAt desc")
     List<EmailLog> findByPersonId(Integer id);
 
     // Statistics queries

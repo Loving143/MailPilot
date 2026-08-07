@@ -27,11 +27,13 @@ public class HrDetailsRequest {
     @JsonProperty("personEmail")
     private String personEmail;
     
-    @JsonProperty("body")
-    private String body;
+//    @JsonProperty("body")
+    private String message;
     
     @JsonProperty("subject")
     private String subject;
+
+    private String description;
 
     public String getEmail() {
 		return email;
@@ -77,11 +79,16 @@ public class HrDetailsRequest {
     public void setPersonEmail(String personEmail) {
         this.personEmail = personEmail;
     }
-	public String getBody() {
-		return body;
-	}
-	
-	public String getSubject() {
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getSubject() {
 		return subject;
 	}
 
@@ -89,9 +96,7 @@ public class HrDetailsRequest {
         this.subject = subject;
     }
 
-    public void setBody(String body) {
-        this.body = body;
-    }
+
 
     @Override
     public String toString() {
@@ -102,5 +107,13 @@ public class HrDetailsRequest {
                 ", name='" + name + '\'' +
                 ", company='" + company + '\'' +
                 '}';
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

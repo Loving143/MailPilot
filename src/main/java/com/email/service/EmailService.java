@@ -16,7 +16,7 @@ public interface EmailService {
 
 	public void send(HrDetailsRequest req) ;
 
-    void updateEmailStatus(String  email, EmailStatus status,String mobNo) ;
+    void updateEmailStatus(String  email, EmailStatus status,String mobNo,String description) ;
 
     ByteArrayInputStream generateExcel() throws IOException;
 

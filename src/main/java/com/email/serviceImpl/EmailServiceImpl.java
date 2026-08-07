@@ -27,6 +27,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -63,6 +64,9 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private RecentEmailRepository recentEmailRepo;
 
+    @Autowired
+    private EmailAsyncService emailAsyncService;
+
     @Value("${resume.path}")
     private String resumePath;
 
@@ -73,10 +77,10 @@ public class EmailServiceImpl implements EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
             helper.setTo(req.getEmail());
             helper.setSubject(req.getSubject());
-            helper.setText(req.getBody(), true);
+            helper.setText(req.getMessage(), true);
             FileSystemResource resume =
-                    new FileSystemResource(resumePath + "Prateek_Kumar_Resume.pdf");
-            helper.addAttachment("Resume.pdf", resume);
+                    new FileSystemResource(resumePath + "Project_Capability_Pricing_Proposal.pdf");
+            helper.addAttachment("JavaNinzaTechLabs_Project_Proposal.pdf", resume);
             mailSender.send(message);
             logger.info("Email sent successfully to: {}", req.getEmail());
         }catch(Exception ex) {
@@ -86,14 +90,16 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void updateEmailStatus(String email, EmailStatus status, String mobNo) {
+    public void updateEmailStatus(String email, EmailStatus status, String mobNo,String description) {
         logger.info("Updating email status for: {} to status: {}", email, status);
         try {
             EmailLog emailLog = repository.findByRecipientEmail(email).orElseThrow(() -> new BadRequestException("Email not found!"));
             emailLog.setStatus(status);
-            if (emailLog.getMobNo() == null) {
+            System.out.println("Mobile No "+mobNo);
+            if (emailLog.getMobNo() != null) {
                 emailLog.setMobNo(mobNo);
             }
+            emailLog.setDescription(description);
             repository.save(emailLog);
             logger.info("Email status updated successfully for: {}", email);
         } catch (Exception e) {
@@ -212,10 +218,6 @@ public class EmailServiceImpl implements EmailService {
         logger.info("Saving email log for recipient: {} by user: {}", req.getEmail(), userName);
         try {
             EmailLog log = new EmailLog();
-            if (repository.existsByRecipientEmail(req.getEmail())) {
-                logger.warn("Email already exists in logs: {}", req.getEmail());
-                throw new BadRequestException("Email already exists.Please update status!!");
-            }
             log.setRecipientEmail(req.getEmail());
             log.setSubject(EmailConstants.SUBJECT);
             log.setSentAt(LocalDateTime.now());
@@ -248,7 +250,7 @@ public class EmailServiceImpl implements EmailService {
             Optional<RecentEmail> recentEmail = recentEmailRepo.findByPersonId(person.getId());
             if(recentEmail.isPresent()) {
                 RecentEmail email = recentEmail.get();
-                email.setBody(req.getBody());
+                email.setBody(req.getMessage());
                 email.setRecipientEmail(req.getEmail());
                 email.setStatus(req.getStatus());
                 email.setSubject(req.getSubject());
@@ -257,7 +259,7 @@ public class EmailServiceImpl implements EmailService {
             }else {
             RecentEmail recent = new RecentEmail();
             recent.setRecipientEmail(req.getEmail());
-            recent.setBody(req.getBody());
+            recent.setBody(req.getMessage());
             recent.setSentAt(LocalDateTime.now());
             recent.setStatus(req.getStatus());
             recent.setSubject(req.getSubject());
@@ -272,6 +274,7 @@ public class EmailServiceImpl implements EmailService {
 	}
 
 	@Override
+
 	public void quickSend(QuickSendRequest req) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getName();
         logger.info("Quick send request for recipient: {} by user: {}", req.getRecipientEmail(), currentUsername);
@@ -280,7 +283,7 @@ public class EmailServiceImpl implements EmailService {
                                 orElseThrow(()->new BadRequestException("Person with email id does not exists!"));
             RecentEmail recentEmail = recentEmailRepo.findByPersonId(person.getId()).orElseThrow(()->new RuntimeException("No recent email found!!"));
             saveEmailLog(req.getRecipientEmail());
-            SendEmail(recentEmail,req);
+            emailAsyncService.SendEmail(recentEmail,req);
             recentEmail.setRecipientEmail(req.getRecipientEmail());
             recentEmailRepo.save(recentEmail);
             logger.info("Quick send completed successfully for recipient: {}", req.getRecipientEmail());
@@ -294,15 +297,18 @@ public class EmailServiceImpl implements EmailService {
         String userName = (String)SecurityContextHolder.getContext().getAuthentication().getName();
         logger.debug("Saving email log for recipient: {} by user: {}", email, userName);
         try {
-            EmailLog log = new EmailLog();
-            if (repository.existsByRecipientEmail(email)) {
-                logger.warn("Email already exists in logs: {}", email);
-                throw new BadRequestException("Email already exists.Please update status!!");
-            }
-            log.setRecipientEmail(email);
-            log.setSubject(EmailConstants.SUBJECT);
-            log.setSentAt(LocalDateTime.now());
-            log.setStatus(EmailStatus.EMAIL_SENT);
+                   Optional<EmailLog> emailLog = repository.findByRecipientEmail(email);
+                   EmailLog log=null;
+                   if(emailLog.isPresent()){
+                       log = emailLog.get();
+                       log.setReminderCount(log.getReminderCount()+1);
+                   }else{
+                        log = new EmailLog();
+                       log.setRecipientEmail(email);
+                       log.setSubject(EmailConstants.SUBJECT);
+                       log.setSentAt(LocalDateTime.now());
+                       log.setStatus(EmailStatus.EMAIL_SENT);
+                   }
 
             Optional<Person> person = personRepository.findByEmail(userName);
             Person person1 = null;
@@ -322,25 +328,7 @@ public class EmailServiceImpl implements EmailService {
             throw new BadRequestException("Failed to save email: " + e.getMessage());
         }
     }
-	
-	public void SendEmail(RecentEmail recentEmail,QuickSendRequest req) {
-        logger.info("Sending email to: {} with recent email template", req.getRecipientEmail());
-        try { 
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(req.getRecipientEmail());
-            helper.setSubject(recentEmail.getSubject());
-            helper.setText(recentEmail.getBody(), true);
-            FileSystemResource resume = 
-                    new FileSystemResource(resumePath + "Prateek_Kumar_Resume.pdf");
-            helper.addAttachment("Resume.pdf", resume);
-            mailSender.send(message);
-            logger.info("Email sent successfully to: {} using recent template", req.getRecipientEmail());
-        }catch(Exception ex) {
-            logger.error("Error sending email to: {} using recent template", req.getRecipientEmail(), ex);
-            throw new BadRequestException("Error sending email: " + ex.getMessage());
-         }
-    }
+
 
 	@Override
 	public void sendIntentEmail(EmailIntentRequest req) {

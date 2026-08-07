@@ -13,7 +13,7 @@ public class EmailConstants {
 			
 			<p>
 			I hope this message finds you well.<br>
-			My name is <b>Prateek Kumar</b>, and I am a <b>Java developer with 4.8 years of experience</b>
+			My name is <b>Prateek Kumar</b>, and I am a <b>Java developer with 4.5 years of experience</b>
 			in building robust backend systems using <b>Java, Spring Boot, Spring Framework, and Hibernate</b>.
 			</p>
 			
@@ -26,6 +26,10 @@ public class EmailConstants {
 			<p>
 			I recently came across <b>a job opportunity at your esteemed company<b>, and I’m very interested in exploring it further.
 			I believe my experience and technical skills would make me a strong fit for the role.
+			</p>
+			
+			<p>
+			My current notice period is <b>30 days</b>, however <b>I am open to a notice period buyout and can join within 15 days</b>.
 			</p>
 			
 			<p>

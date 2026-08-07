@@ -6,6 +6,7 @@ import com.email.entity.EmailLog;
 import java.time.LocalDateTime;
 
 public class EmailLogResponse {
+    private Long id;
     private String name;
     private String recipientEmail;
     private String subject;
@@ -25,6 +26,8 @@ public class EmailLogResponse {
             this.mobNo = emailLog.getMobNo();
             this.status = String.valueOf(emailLog.getStatus());
             this.company = emailLog.getCompany();
+            this.id = emailLog.getId();
+
     }
 
     public String getName() {
@@ -81,6 +84,14 @@ public class EmailLogResponse {
 
     public void setCompany(String company) {
         this.company = company;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @Override

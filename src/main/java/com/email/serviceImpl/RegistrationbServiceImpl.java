@@ -1,5 +1,6 @@
 package com.email.serviceImpl;
 
+import java.net.InetAddress;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ import com.email.service.RegistrationService;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @Service
 public class RegistrationbServiceImpl implements RegistrationService {
@@ -104,7 +107,6 @@ public class RegistrationbServiceImpl implements RegistrationService {
             model.put("subscription", "Premium");
             model.put("otp",otp);
             model.put("bankName","Medicare");
-            
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
             helper.setTo(email);
@@ -112,9 +114,16 @@ public class RegistrationbServiceImpl implements RegistrationService {
             Template template = freemarkerConfig.getTemplate("emailTemplate.ftl");
             String htmlBody = FreeMarkerTemplateUtils.processTemplateIntoString(template,model);
             helper.setText(htmlBody, true);
+            JavaMailSenderImpl sender = (JavaMailSenderImpl) mailSender;
             ClassPathResource logoResource = new ClassPathResource("static/images/mailpilot.png");
             helper.addInline("logoImage", logoResource);
+            System.out.println("Host      : " + sender.getHost());
+            System.out.println("Port      : " + sender.getPort());
+            System.out.println("Username  : " + sender.getUsername());
             mailSender.send(message);
+            System.out.println("Host      : " + sender.getHost());
+            System.out.println("Port      : " + sender.getPort());
+            System.out.println("Username  : " + sender.getUsername());
             logger.info("OTP email sent successfully to: {}", email);
         } catch (Exception e) {
             logger.error("Error sending OTP email to: {}", email, e);
